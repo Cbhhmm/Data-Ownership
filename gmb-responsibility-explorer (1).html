@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>gmb · Team Responsibility Explorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* GMB Brand Colors — Brand Guide 2024 */
+  --gmb-green:#77b800;       /* Primary — PMS 368 */
+  --gmb-green-dk:#053c3c;    /* Dark Green — "new black" */
+  --gmb-purple:#b482ff;      /* Purple — PMS 2087 */
+  --gmb-orange:#ff773f;      /* Orange — PMS 1575 */
+  --gmb-grey:#c8c3be;        /* Grey support */
+
+  /* UI tokens mapped to GMB palette */
+  --bg:#f0ede6;              /* Warm off-white matching brand pages */
+  --surface:#ffffff;
+  --border:#dedad2;
+  --border-strong:#b8b4aa;
+  --text:#1a1a18;
+  --text-2:#5a5850;
+  --text-3:#9a9890;
+
+  /* Primary action = GMB green */
+  --blue:var(--gmb-green);
+  --blue-bg:#edf7cc;
+  --blue-text:#3d6000;
+
+  /* Confirmed = dark green */
+  --green:var(--gmb-green-dk);
+  --green-bg:#d6efef;
+  --green-text:#032828;
+
+  /* Assumed = orange */
+  --amber:var(--gmb-orange);
+  --amber-bg:#ffeee5;
+  --amber-text:#8a3800;
+
+  /* Risk/error = orange-red */
+  --red:#d94f00;
+  --red-bg:#fde8dc;
+
+  /* Purple accent */
+  --purple:var(--gmb-purple);
+  --purple-bg:#f2ebff;
+
+  /* Teal from dark green */
+  --teal:#0a5a5a;
+  --teal-bg:#d6efef;
+
+  --radius:6px;--radius-lg:10px;
+}
+body{font-family:'Nunito Sans',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;color:var(--text);background:var(--bg);line-height:1.5}
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* Sidebar — GMB dark green */
+.sidebar{width:228px;min-width:228px;background:var(--gmb-green-dk);border-right:none;display:flex;flex-direction:column;overflow:hidden}
+.logo{padding:18px 16px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.logo-word{font-weight:700;font-size:13px;color:rgba(255,255,255,.5);letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px}
+nav{flex:1;padding:6px 0;overflow-y:auto}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;font-size:13px;color:rgba(255,255,255,.6);border-left:3px solid transparent;transition:all .12s;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.9);border-left-color:rgba(255,255,255,.3)}
+.nav-item.active{background:rgba(119,184,0,.18);color:#fff;border-left-color:var(--gmb-green);font-weight:600}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;opacity:.6}
+.nav-item.active svg{opacity:1}
+.sidebar-footer{padding:12px 16px;border-top:1px solid rgba(255,255,255,.1);font-size:11px;color:rgba(255,255,255,.3)}
+
+/* Main */
+.main{flex:1;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.topbar{padding:12px 20px;border-bottom:1px solid var(--border);border-top:3px solid var(--gmb-green);background:var(--surface);display:flex;align-items:center;gap:10px}
+.search{flex:1;max-width:320px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;background:var(--bg);color:var(--text);outline:none;transition:border .12s}
+.search:focus{border-color:var(--gmb-green);box-shadow:0 0 0 3px rgba(119,184,0,.15)}
+.topbar-actions{display:flex;gap:8px;margin-left:auto}
+.btn{padding:7px 14px;border-radius:var(--radius);font-size:13px;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text-2);transition:all .12s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;font-family:inherit}
+.btn:hover{border-color:var(--border-strong);color:var(--text);background:var(--bg)}
+.btn-primary{background:var(--gmb-green);color:#fff;border-color:var(--gmb-green);font-weight:600}
+.btn-primary:hover{background:#639c00;border-color:#639c00;color:#fff}
+.content{flex:1;overflow-y:auto;padding:24px}
+
+/* Cards & layout */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:14px}
+.card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);margin-bottom:14px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.page-title{font-size:20px;font-weight:600;letter-spacing:-.01em;margin-bottom:4px}
+.page-sub{font-size:13px;color:var(--text-2);margin-bottom:22px}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center}
+.stat-n{font-size:24px;font-weight:600;letter-spacing:-.02em;color:var(--text)}
+.stat-l{font-size:11px;color:var(--text-3);margin-top:3px}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500;gap:4px;white-space:nowrap}
+.badge-blue{background:var(--blue-bg);color:var(--blue-text)}
+.badge-green{background:var(--green-bg);color:var(--green-text)}
+.badge-amber{background:var(--amber-bg);color:var(--amber-text)}
+.badge-gray{background:#f1efe8;color:#5f5e5a}
+.badge-purple{background:var(--purple-bg);color:var(--purple)}
+.badge-teal{background:var(--teal-bg);color:var(--teal)}
+.badge-red{background:var(--red-bg);color:var(--red)}
+
+/* Grid selectors */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.tile{padding:11px 14px;border:1px solid var(--border);border-radius:var(--radius);cursor:pointer;font-size:13px;color:var(--text);background:var(--surface);text-align:left;transition:all .12s;line-height:1.35}
+.tile:hover{border-color:var(--gmb-green);background:var(--blue-bg);color:var(--blue-text)}
+.tile .tile-sub{font-size:11px;color:var(--text-3);margin-top:3px;font-weight:400}
+.tile-new{border-color:var(--gmb-orange);background:#fff8f5}
+
+/* Rows */
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.row:last-child{border-bottom:none}
+.row-label{color:var(--text-2);font-size:12px;min-width:130px;flex-shrink:0}
+.row-link{cursor:pointer;color:var(--text)}
+.row-link:hover{color:var(--blue);text-decoration:underline}
+
+/* Back button */
+.back{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--text-2);cursor:pointer;margin-bottom:16px;padding:4px 0}
+.back:hover{color:var(--text)}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);padding:24px;width:540px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18)}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--text-2);margin-bottom:20px}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+
+/* Form elements */
+label{display:block;font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:5px;margin-top:14px}
+label:first-child{margin-top:0}
+input[type=text],textarea,select{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--text);background:var(--surface);outline:none;font-family:inherit;transition:border .12s}
+input[type=text]:focus,textarea:focus,select:focus{border-color:var(--blue)}
+textarea{min-height:72px;resize:vertical;line-height:1.5}
+select[multiple]{height:120px;padding:4px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field-hint{font-size:11px;color:var(--text-3);margin-top:4px}
+.required{color:var(--red)}
+
+/* Checkboxes team selector */
+.check-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:8px}
+.check-item{display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:5px;cursor:pointer;font-size:12px}
+.check-item:hover{background:var(--bg)}
+.check-item input[type=checkbox]{width:14px;height:14px;cursor:pointer;accent-color:var(--blue)}
+
+/* Alert / info bars */
+.info-bar{padding:8px 12px;border-radius:var(--radius);font-size:12px;display:flex;align-items:flex-start;gap:7px;margin-bottom:14px}
+.info-bar.green{background:#d6efef;color:#032828}
+.info-bar.amber{background:var(--amber-bg);color:var(--amber-text)}
+.info-bar.blue{background:var(--blue-bg);color:var(--blue-text)}
+
+/* OQ items */
+.oq{padding:12px 14px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px}
+.oq.high{border-left:3px solid var(--red)}
+.oq.open{border-left:3px solid var(--amber)}
+.oq.resolved{opacity:.55;border-left:3px solid var(--green)}
+.oq-q{font-size:13px;font-weight:500;margin-bottom:5px}
+.oq-meta{font-size:11px;color:var(--text-2);display:flex;gap:12px;flex-wrap:wrap}
+.section-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);padding:10px 0 6px;margin-top:4px}
+
+/* Tag chips on detail */
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{padding:3px 10px;background:var(--bg);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text-2);cursor:pointer}
+.tag:hover{border-color:var(--blue);color:var(--blue-text);background:var(--blue-bg)}
+
+/* Confidence pill selector */
+.conf-pills{display:flex;gap:6px;flex-wrap:wrap}
+.conf-pill{padding:5px 14px;border:1px solid var(--border);border-radius:20px;font-size:12px;cursor:pointer;color:var(--text-2);background:var(--surface);transition:all .12s}
+.conf-pill:hover{border-color:var(--border-strong)}
+.conf-pill.sel-Confirmed{border-color:var(--green);background:var(--green-bg);color:var(--green-text)}
+.conf-pill.sel-Assumed{border-color:#BA7517;background:var(--amber-bg);color:var(--amber-text)}
+.conf-pill.sel-Unknown{border-color:var(--border-strong);background:#f1efe8;color:#5f5e5a}
+
+/* Export notice */
+.export-note{font-size:11px;color:var(--text-3);margin-top:8px;padding:8px 12px;border:1px dashed var(--border);border-radius:var(--radius);background:var(--bg)}
+
+/* Lifecycle */
+.stage-strip{display:flex;gap:0;margin-bottom:22px;border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.stage-chip{flex:1;padding:10px 6px;text-align:center;font-size:11px;cursor:pointer;border-right:1px solid var(--border);background:var(--surface);color:var(--text-2);transition:all .12s;line-height:1.3;user-select:none}
+.stage-chip:last-child{border-right:none}
+.stage-chip:hover{background:#f3f2ef;color:var(--text)}
+.stage-chip.active{background:var(--gmb-green);color:#fff;font-weight:700}
+.stage-chip .stage-num{display:block;font-size:16px;font-weight:600;margin-bottom:2px}
+.handoff-arrow{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:8px;font-size:13px}
+.handoff-from{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:4px 10px;font-size:12px}
+.handoff-to{background:var(--blue-bg);border:1px solid #c5e080;border-radius:var(--radius);padding:4px 10px;font-size:12px;color:var(--blue-text);font-weight:600}
+.arrow-line{flex:1;height:1px;background:var(--border-strong);position:relative}
+.arrow-line::after{content:'▶';position:absolute;right:-6px;top:-7px;font-size:10px;color:var(--border-strong)}
+.output-pill{display:inline-flex;align-items:center;padding:4px 12px;border:1px solid var(--border);border-radius:20px;font-size:12px;background:var(--surface);margin:3px;color:var(--text-2)}
+
+/* Relationship map */
+#mapWrap{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+#mapCanvas{display:block;width:100%}
+.map-legend{display:flex;gap:16px;flex-wrap:wrap;padding:10px 16px;border-top:1px solid var(--border)}
+.map-leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-2)}
+.map-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.map-tooltip{position:absolute;background:var(--text);color:#fff;padding:5px 10px;border-radius:var(--radius);font-size:11px;pointer-events:none;white-space:nowrap;opacity:0;transition:opacity .1s;z-index:10}
+.map-filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.map-filter-btn{padding:5px 12px;border:1px solid var(--border);border-radius:20px;font-size:12px;cursor:pointer;background:var(--surface);color:var(--text-2);transition:all .12s}
+.map-filter-btn.on{border-color:var(--gmb-green);background:var(--blue-bg);color:var(--blue-text);font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="app">
+ <div class="sidebar">
+  <div class="logo">
+   <!-- GMB logo: purple pixel + green arrow + wordmark -->
+   <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+    <svg width="36" height="28" viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="gmb logo mark">
+     <!-- Purple pixel square -->
+     <rect x="0" y="0" width="9" height="7" fill="#b482ff"/>
+     <!-- Green diagonal bar -->
+     <rect x="2" y="3" width="6" height="22" rx="1" fill="#77b800" transform="rotate(-45 10 22)"/>
+     <!-- Green vertical bar -->
+     <rect x="22" y="4" width="6" height="22" rx="1" fill="#77b800"/>
+    </svg>
+    <span style="font-size:22px;font-weight:700;color:#77b800;letter-spacing:-.03em;line-height:1">gmb</span>
+   </div>
+   <div class="logo-word">Team Responsibility Explorer</div>
+  </div>
+  <nav id="nav"></nav>
+  <div class="sidebar-footer">v0.5 · GMB internal tool · Data in browser</div>
+ </div>
+ <div class="main">
+  <div class="topbar">
+   <input class="search" type="text" id="search" placeholder="Search…" oninput="Q=this.value.toLowerCase();render()">
+   <div class="topbar-actions">
+    <button class="btn btn-primary" onclick="openAddDataObject()">+ Add Data Object</button>
+    <button class="btn" onclick="exportData()" title="Download data as JSON">⬇ Export JSON</button>
+   </div>
+  </div>
+  <div class="content" id="content"></div>
+ </div>
+</div>
+
+<!-- Add / Edit Data Object Modal -->
+<div class="modal-overlay" id="doModal">
+ <div class="modal">
+  <div class="modal-title" id="doModalTitle">Add Data Object</div>
+  <div class="modal-sub">Fill in what you know. Fields marked <span class="required">*</span> are required. Everything else can be updated later.</div>
+
+  <input type="hidden" id="doId">
+
+  <label>Name <span class="required">*</span></label>
+  <input type="text" id="doName" placeholder="e.g. Client Contract PDF">
+
+  <label>Definition</label>
+  <textarea id="doDef" placeholder="What is this data object? Where does it come from?"></textarea>
+
+  <div class="form-row">
+   <div>
+    <label>System of Record</label>
+    <select id="doSoR"></select>
+    <div class="field-hint">Where is the authoritative copy stored?</div>
+   </div>
+   <div>
+    <label>Archive Location (if different)</label>
+    <input type="text" id="doArchive" placeholder="e.g. Network Drives / ACC">
+   </div>
+  </div>
+
+  <div class="form-row">
+   <div>
+    <label>Owner Team <span class="required">*</span></label>
+    <select id="doOwner"></select>
+   </div>
+   <div>
+    <label>Steward Role</label>
+    <input type="text" id="doSteward" placeholder="e.g. Project Manager">
+   </div>
+  </div>
+
+  <label>Teams that USE this data object</label>
+  <div class="check-grid" id="doUsersGrid"></div>
+  <div class="field-hint">Check all teams that read, update, or depend on this object.</div>
+
+  <label>Lifecycle stages involved</label>
+  <div class="check-grid" id="doStagesGrid"></div>
+
+  <label>Confidence</label>
+  <div class="conf-pills" id="doConf">
+   <div class="conf-pill" onclick="setConf('Confirmed')" data-v="Confirmed">✓ Confirmed</div>
+   <div class="conf-pill" onclick="setConf('Assumed')" data-v="Assumed">~ Assumed</div>
+   <div class="conf-pill" onclick="setConf('Unknown')" data-v="Unknown">? Unknown</div>
+  </div>
+
+  <label>Duplicate / Risk Note</label>
+  <input type="text" id="doDupe" placeholder="e.g. May diverge between CRM and Unanet">
+
+  <label>Notes</label>
+  <textarea id="doNotes" placeholder="Any other context, decisions made, or follow-up needed…"></textarea>
+
+  <div class="modal-footer">
+   <button class="btn" onclick="closeModal('doModal')">Cancel</button>
+   <button class="btn btn-primary" onclick="saveDataObject()">Save Data Object</button>
+  </div>
+ </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" style="position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:10px 18px;border-radius:var(--radius);font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:200">Saved</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+
+const TEAMS = [
+ {id:"disciplines",name:"Disciplines",group:"GMB",source:"GMB_Teams.png",notes:"Maps to 'Project Teams' in diagram."},
+ {id:"finance-team",name:"Finance Team",group:"GMB",source:"GMB_Teams.png",notes:""},
+ {id:"gmb-corp-brand-mktg",name:"GMB Corporate Branding & Marketing",group:"GMB",source:"GMB_Teams.png",notes:"Owns CRM license."},
+ {id:"integration",name:"Integration",group:"GMB",source:"GMB_Teams.png",notes:"Operational integration team. Separate from Vision/Integration Team."},
+ {id:"learning-hubs",name:"Learning Hubs",group:"GMB",source:"GMB_Teams.png",notes:"No confirmed lifecycle role yet."},
+ {id:"operations-team",name:"Operations Team",group:"GMB",source:"GMB_Teams.png",notes:"IS the 'Client Database Team' referenced in the diagram."},
+ {id:"people",name:"People",group:"GMB",source:"GMB_Teams.png",notes:""},
+ {id:"practice-team",name:"Practice Team",group:"GMB",source:"GMB_Teams.png",notes:"Governs GMB Commons and record playbooks."},
+ {id:"super-teams",name:"Super Teams",group:"GMB",source:"GMB_Teams.png",notes:"IT/license role for most tools."},
+ {id:"vision-integration-team",name:"Vision / Integration Team",group:"GMB",source:"GMB_Teams.png",notes:"C-suite. Approves large initiatives. Separate from Integration."},
+ {id:"digital-delivery",name:"Digital Delivery",group:"GMB",source:"Workshop session",notes:"Owns end-of-project archive handoff. Added via workshop."},
+ {id:"innovation",name:"Innovation",group:"GMB",source:"Workshop session",notes:"Stewards Firm Code / Firm ID reconciliation. Added via workshop."},
+ {id:"external",name:"External",group:"External",source:"GMB_Teams.png",notes:"Clients and external contacts."}
+];
+
+const TOOLS = [
+ {id:"monday",name:"Monday.com"},{id:"autodesk-build",name:"Autodesk Build"},
+ {id:"sharepoint",name:"SharePoint / Teams Files"},{id:"excel",name:"Excel / List / Tracker"},
+ {id:"ms-teams",name:"MS Teams"},{id:"outlook",name:"Outlook"},
+ {id:"network-drives",name:"Network Drives"},{id:"crm",name:"CRM"},
+ {id:"paylocity",name:"Paylocity"},{id:"unanet",name:"Unanet"},
+ {id:"revit",name:"Revit"},{id:"acc",name:"ACC"},{id:"gmb-commons",name:"GMB Commons"}
+];
+
+const LIFECYCLE_STAGES = [
+ {id:"intake",name:"Intake",description:"Initial client or project inquiry, qualification, and relationship entry.",
+  responsibleTeams:["operations-team","disciplines","gmb-corp-brand-mktg"],
+  supportingTools:["crm","monday","outlook"],
+  outputs:["Client Data","Org Name / Location","Proposal"],
+  handoffs:[{from:"gmb-corp-brand-mktg",to:"operations-team",note:"Lead enters CRM — Operations takes ownership of client record"},{from:"operations-team",to:"disciplines",note:"Qualified opportunity — Project team begins scoping"}]},
+ {id:"project-setup",name:"Project Setup",description:"Establishing the project in all systems, assigning codes, and standing up the project record.",
+  responsibleTeams:["operations-team","finance-team","disciplines","innovation"],
+  supportingTools:["unanet","monday","sharepoint","crm"],
+  outputs:["Project ID","Firm Code / Firm ID","Project SOW","Fee","Project Schedule","Facility Name / Location"],
+  handoffs:[{from:"innovation",to:"finance-team",note:"Firm Code / ID reconciled across CRM and Unanet"},{from:"finance-team",to:"disciplines",note:"Project ID created and fee set — team assigned in Monday"}]},
+ {id:"assignment",name:"Assignment",description:"Assigning team members to project roles and confirming resourcing.",
+  responsibleTeams:["disciplines","people","practice-team"],
+  supportingTools:["monday","ms-teams","unanet"],
+  outputs:["Project Schedule","Role assignments"],
+  handoffs:[{from:"people",to:"disciplines",note:"Resource availability confirmed — roles assigned"}]},
+ {id:"active-work",name:"Active Work",description:"Active project delivery, design, documentation, and construction administration.",
+  responsibleTeams:["disciplines","integration","practice-team"],
+  supportingTools:["revit","autodesk-build","monday","sharepoint","acc","ms-teams"],
+  outputs:["Project SOW","Project Schedule","Addendum & Bulletin PDF","Fee"],
+  handoffs:[{from:"disciplines",to:"operations-team",note:"Project data kept current in systems"},{from:"integration",to:"disciplines",note:"Platform integrations maintained — data flows confirmed"}]},
+ {id:"reporting-closeout",name:"Reporting / Closeout",description:"Project completion, financial close, record document submission, and photography.",
+  responsibleTeams:["disciplines","finance-team","operations-team","gmb-corp-brand-mktg","digital-delivery"],
+  supportingTools:["unanet","sharepoint","network-drives","autodesk-build","monday"],
+  outputs:["Record Drawing PDF","Record Spec PDF","Addendum & Bulletin PDF","Record Playbook PDF","Final Project Photos","Project Resume"],
+  handoffs:[{from:"disciplines",to:"digital-delivery",note:"Record documents submitted — Digital Delivery coordinates archive package"},{from:"gmb-corp-brand-mktg",to:"practice-team",note:"Photos and project resume archived to GMB Commons"},{from:"finance-team",to:"operations-team",note:"Financial close complete — client record updated"}]},
+ {id:"archive",name:"Archive",description:"Long-term storage of all project records and system updates at close.",
+  responsibleTeams:["digital-delivery","operations-team","integration"],
+  supportingTools:["network-drives","sharepoint","acc"],
+  outputs:["End of Project Data Archive"],
+  handoffs:[{from:"digital-delivery",to:"operations-team",note:"Archive complete — Operations updates client record"},{from:"digital-delivery",to:"integration",note:"Archive confirmed — connected systems updated"}]},
+ {id:"onboarding",name:"Onboarding",description:"New employee setup across HR, IT, and firm systems.",
+  responsibleTeams:["people","super-teams","finance-team"],
+  supportingTools:["paylocity","ms-teams","outlook","sharepoint","gmb-commons"],
+  outputs:["Employee Data","Work Resume"],
+  handoffs:[{from:"people",to:"super-teams",note:"HR record created — IT provisions system access"},{from:"people",to:"finance-team",note:"Employee set up in Paylocity — Unanet record created"}]},
+ {id:"time-at-company",name:"Time at Company",description:"Ongoing employee development, profile maintenance, and knowledge capture.",
+  responsibleTeams:["people","practice-team","learning-hubs","gmb-corp-brand-mktg"],
+  supportingTools:["gmb-commons","paylocity","ms-teams"],
+  outputs:["Employee Profile","Project Resume","Work Resume"],
+  handoffs:[]},
+ {id:"offboarding",name:"Offboarding",description:"Employee departure, knowledge transfer, and access removal.",
+  responsibleTeams:["people","super-teams","finance-team"],
+  supportingTools:["paylocity","ms-teams","outlook","sharepoint"],
+  outputs:[],
+  handoffs:[{from:"people",to:"super-teams",note:"Offboarding initiated — IT removes system access"},{from:"people",to:"finance-team",note:"Final pay and records closed in Paylocity and Unanet"}]},
+ {id:"large-initiative-approval",name:"Large Initiative Approval",description:"C-suite gate for significant firm-wide initiatives before execution begins.",
+  responsibleTeams:["vision-integration-team"],
+  supportingTools:["ms-teams","outlook"],
+  outputs:["Approved initiative brief"],
+  handoffs:[{from:"vision-integration-team",to:"integration",note:"Initiative approved — Integration leads execution planning"}]}
+];
+
+// Data objects — editable at runtime, persisted to localStorage
+let DATA_OBJECTS = JSON.parse(localStorage.getItem('gmb_data_objects') || 'null') || [
+ {id:"client-data",name:"Client Data",definition:"Client organization information including contact details",systemOfRecord:"crm",ownerTeam:"operations-team",usedByTeams:["disciplines","gmb-corp-brand-mktg","finance-team","innovation"],stewardRole:"Operations Team",lifecycleStages:["intake","project-setup"],confidence:"Confirmed",duplicateRisk:"",notes:"",archiveLocation:""},
+ {id:"org-name-location",name:"Org Name / Location",definition:"Client org name and address",systemOfRecord:"crm",ownerTeam:"operations-team",usedByTeams:["disciplines","finance-team"],stewardRole:"Operations Team",lifecycleStages:["intake"],confidence:"Confirmed",duplicateRisk:"CRM vs Unanet Firm Name",notes:"",archiveLocation:""},
+ {id:"project-sow",name:"Project SOW",definition:"Scope of work document defining deliverables",systemOfRecord:"sharepoint",ownerTeam:"disciplines",usedByTeams:["finance-team","operations-team","practice-team"],stewardRole:"Project Manager",lifecycleStages:["project-setup","active-work","reporting-closeout"],confidence:"Confirmed",duplicateRisk:"",notes:"",archiveLocation:""},
+ {id:"project-schedule",name:"Project Schedule",definition:"Project timeline and milestones",systemOfRecord:"monday",ownerTeam:"disciplines",usedByTeams:["finance-team","operations-team","integration"],stewardRole:"Project Manager",lifecycleStages:["project-setup","active-work"],confidence:"Confirmed",duplicateRisk:"",notes:"",archiveLocation:""},
+ {id:"proposal",name:"Proposal",definition:"Client-facing proposal document",systemOfRecord:"sharepoint",ownerTeam:"disciplines",usedByTeams:["gmb-corp-brand-mktg","finance-team","operations-team"],stewardRole:"Project Lead",lifecycleStages:["intake","project-setup"],confidence:"Confirmed",duplicateRisk:"",notes:"",archiveLocation:""},
+ {id:"fee",name:"Fee",definition:"Project fee and billing information",systemOfRecord:"unanet",ownerTeam:"finance-team",usedByTeams:["disciplines","operations-team"],stewardRole:"Finance Lead",lifecycleStages:["project-setup","active-work","reporting-closeout"],confidence:"Confirmed",duplicateRisk:"",notes:"",archiveLocation:""},
+ {id:"project-id",name:"Project ID",definition:"Unique project identifier across all systems",systemOfRecord:"unanet",ownerTeam:"finance-team",usedByTeams:["disciplines","operations-team","integration","digital-delivery"],stewardRole:"Finance Team",lifecycleStages:["project-setup"],confidence:"Confirmed",duplicateRisk:"",notes:"",archiveLocation:""},
+ {id:"firm-code",name:"Firm Code / Firm ID",definition:"Client firm identifiers in Unanet and CRM",systemOfRecord:"unanet",ownerTeam:"innovation",usedByTeams:["finance-team","operations-team","gmb-corp-brand-mktg"],stewardRole:"Innovation Team",lifecycleStages:["project-setup"],confidence:"Confirmed",duplicateRisk:"May diverge between CRM and Unanet — Innovation stewards reconciliation.",notes:"OQ7 resolved.",archiveLocation:""},
+ {id:"employee-data",name:"Employee Data",definition:"Core employee record: code, name, email, status, hire date",systemOfRecord:"paylocity",ownerTeam:"people",usedByTeams:["finance-team","super-teams"],stewardRole:"People Team",lifecycleStages:["onboarding","time-at-company","offboarding"],confidence:"Confirmed",duplicateRisk:"",notes:"",archiveLocation:""},
+ {id:"record-drawing-pdf",name:"Record Drawing PDF",definition:"Final as-built drawing PDFs",systemOfRecord:"network-drives",ownerTeam:"disciplines",usedByTeams:["digital-delivery","integration"],stewardRole:"Project Architect",lifecycleStages:["reporting-closeout","archive"],confidence:"Confirmed",duplicateRisk:"",notes:"",archiveLocation:"Network Drives / ACC"},
+ {id:"final-project-photos",name:"Final Project Photos",definition:"Photography at project completion",systemOfRecord:"network-drives",ownerTeam:"gmb-corp-brand-mktg",usedByTeams:["practice-team","digital-delivery"],stewardRole:"Marketing",lifecycleStages:["reporting-closeout","archive"],confidence:"Confirmed",duplicateRisk:"",notes:"",archiveLocation:"Network Drives / GMB Commons"},
+ {id:"record-spec-pdf",name:"Record Spec PDF",definition:"Final project specification PDFs",systemOfRecord:"network-drives",ownerTeam:"disciplines",usedByTeams:["digital-delivery"],stewardRole:"Project Architect",lifecycleStages:["reporting-closeout","archive"],confidence:"Confirmed",duplicateRisk:"",notes:"",archiveLocation:"Network Drives"},
+ {id:"addendum-bulletin-pdf",name:"Addendum & Bulletin PDF",definition:"Construction addenda and bulletins",systemOfRecord:"autodesk-build",ownerTeam:"disciplines",usedByTeams:["integration","digital-delivery"],stewardRole:"Project Manager",lifecycleStages:["active-work","reporting-closeout"],confidence:"Confirmed",duplicateRisk:"",notes:"",archiveLocation:""},
+ {id:"record-playbook-pdf",name:"Record Playbook PDF",definition:"Project delivery playbook PDFs",systemOfRecord:"network-drives",ownerTeam:"practice-team",usedByTeams:["disciplines","digital-delivery"],stewardRole:"Practice Lead",lifecycleStages:["reporting-closeout","archive"],confidence:"Confirmed",duplicateRisk:"",notes:"",archiveLocation:"Network Drives"},
+ {id:"end-of-project-archive",name:"End of Project Data Archive",definition:"Complete project data package archived at project close",systemOfRecord:"network-drives",ownerTeam:"digital-delivery",usedByTeams:["operations-team","integration"],stewardRole:"Digital Delivery Team",lifecycleStages:["archive"],confidence:"Confirmed",duplicateRisk:"",notes:"OQ4 resolved: Digital Delivery owns handoff.",archiveLocation:"Network Drives"},
+ {id:"work-resume",name:"Work Resume",definition:"Employee work history on file",systemOfRecord:"gmb-commons",ownerTeam:"people",usedByTeams:["gmb-corp-brand-mktg"],stewardRole:"People Team",lifecycleStages:["onboarding","time-at-company"],confidence:"Confirmed",duplicateRisk:"",notes:"",archiveLocation:""},
+ {id:"project-resume",name:"Project Resume",definition:"Project-specific credential sheet",systemOfRecord:"gmb-commons",ownerTeam:"gmb-corp-brand-mktg",usedByTeams:["people","practice-team"],stewardRole:"Marketing",lifecycleStages:["time-at-company","reporting-closeout"],confidence:"Confirmed",duplicateRisk:"",notes:"OQ8 resolved: owned by GMB Corporate Branding & Marketing.",archiveLocation:""},
+ {id:"facility-name-location",name:"Facility Name / Location",definition:"Building or site name and address for project facility",systemOfRecord:"unanet",ownerTeam:"operations-team",usedByTeams:["disciplines"],stewardRole:"Operations Team",lifecycleStages:["project-setup"],confidence:"Confirmed",duplicateRisk:"",notes:"",archiveLocation:""}
+];
+
+function save(){localStorage.setItem('gmb_data_objects',JSON.stringify(DATA_OBJECTS));showToast('Saved');}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.opacity=1;setTimeout(()=>t.style.opacity=0,2000);}
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+const VIEWS=['data','team','questions'];
+let view='data', subview=null, selected=null, Q='', doConf='Confirmed', lcStage=null, mapFilters={teams:true,tools:true,data:true,lifecycle:true};
+
+// ─── NAV ──────────────────────────────────────────────────────────────────────
+const NAV=[
+ {id:'data',label:'Data Objects',icon:'<path d="M3 5a2 2 0 012-2h14a2 2 0 012 2v3a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"/><path d="M3 12a2 2 0 012-2h14a2 2 0 012 2v3a2 2 0 01-2 2H5a2 2 0 01-2-2v-3z"/>'},
+ {id:'team',label:'Teams',icon:'<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>'},
+ {id:'lifecycle',label:'Lifecycle Explorer',icon:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>'},
+ {id:'map',label:'Relationship Map',icon:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>'},
+ {id:'questions',label:'Open Questions',icon:'<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>'}
+];
+function renderNav(){
+ document.getElementById('nav').innerHTML=NAV.map(n=>`<div class="nav-item${view===n.id?' active':''}" onclick="go('${n.id}')">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${n.icon}</svg>${n.label}</div>`).join('');
+}
+function go(v){view=v;selected=null;subview=null;renderNav();render();}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function render(){
+ const c=document.getElementById('content');
+ if(view==='data') c.innerHTML=selected?renderDODetail():renderDOList();
+ else if(view==='team') c.innerHTML=selected?renderTeamDetail():renderTeamList();
+ else if(view==='lifecycle') c.innerHTML=renderLifecycle();
+ else if(view==='map'){c.innerHTML=renderMap();requestAnimationFrame(drawMap);}
+ else if(view==='questions') c.innerHTML=renderQuestions();
+}
+
+// ── DATA OBJECTS LIST ──────────────────────────────────────────────────────────
+function renderDOList(){
+ const all=DATA_OBJECTS.filter(d=>!Q||d.name.toLowerCase().includes(Q)||(d.definition||'').toLowerCase().includes(Q));
+ const byOwner={};
+ all.forEach(d=>{const k=d.ownerTeam||'unknown';if(!byOwner[k])byOwner[k]=[];byOwner[k].push(d);});
+ const confirmed=all.filter(d=>d.confidence==='Confirmed').length;
+ const assumed=all.filter(d=>d.confidence==='Assumed').length;
+ const unknown=all.filter(d=>d.confidence==='Unknown'||!d.confidence).length;
+ let html=`<div class="page-title">Data Objects</div>
+ <div class="page-sub">All data objects across the GMB ecosystem. Select to view details or edit.</div>
+ <div class="stat-row">
+  <div class="stat"><div class="stat-n">${all.length}</div><div class="stat-l">Total</div></div>
+  <div class="stat"><div class="stat-n" style="color:var(--green)">${confirmed}</div><div class="stat-l">Confirmed</div></div>
+  <div class="stat"><div class="stat-n" style="color:var(--amber)">${assumed}</div><div class="stat-l">Assumed</div></div>
+  <div class="stat"><div class="stat-n" style="color:var(--text-3)">${unknown}</div><div class="stat-l">Unknown</div></div>
+ </div>`;
+ Object.entries(byOwner).sort().forEach(([teamId,items])=>{
+  const team=TEAMS.find(t=>t.id===teamId);
+  html+=`<div class="section-label">${team?.name||'Unknown owner'}</div>
+  <div class="grid" style="margin-bottom:14px">`;
+  items.forEach(d=>{
+   const sor=TOOLS.find(t=>t.id===d.systemOfRecord);
+   const confColor=d.confidence==='Confirmed'?'badge-green':d.confidence==='Assumed'?'badge-amber':'badge-gray';
+   html+=`<div class="tile" onclick="selected='${d.id}';render()">
+    <div>${d.name}</div>
+    <div class="tile-sub" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px">
+     <span class="badge ${confColor}" style="font-size:10px">${d.confidence||'Unknown'}</span>
+     ${sor?`<span class="badge badge-gray" style="font-size:10px">${sor.name}</span>`:''}
+     ${d.duplicateRisk?`<span class="badge badge-amber" style="font-size:10px">⚠ risk</span>`:''}
+    </div>
+   </div>`;
+  });
+  html+=`</div>`;
+ });
+ return html;
+}
+
+// ── DATA OBJECT DETAIL ─────────────────────────────────────────────────────────
+function renderDODetail(){
+ const d=DATA_OBJECTS.find(x=>x.id===selected);
+ if(!d) return '';
+ const owner=TEAMS.find(t=>t.id===d.ownerTeam);
+ const sor=TOOLS.find(t=>t.id===d.systemOfRecord);
+ const stages=LIFECYCLE_STAGES.filter(s=>d.lifecycleStages&&d.lifecycleStages.includes(s.id));
+ const users=(d.usedByTeams||[]).map(id=>TEAMS.find(t=>t.id===id)).filter(Boolean);
+ const confColor=d.confidence==='Confirmed'?'badge-green':d.confidence==='Assumed'?'badge-amber':'badge-gray';
+ return `<div class="back" onclick="selected=null;render()">← All Data Objects</div>
+ <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+  <div>
+   <div class="page-title">${d.name}</div>
+   <div style="font-size:13px;color:var(--text-2);margin-top:4px">${d.definition||'No definition yet.'}</div>
+  </div>
+  <div style="display:flex;gap:8px;flex-shrink:0">
+   <span class="badge ${confColor}" style="font-size:12px;padding:4px 12px">${d.confidence||'Unknown'}</span>
+   <button class="btn" onclick="openEditDO('${d.id}')">✏ Edit</button>
+   <button class="btn" onclick="deleteDO('${d.id}')" style="color:var(--red)">✕ Delete</button>
+  </div>
+ </div>
+ ${d.duplicateRisk?`<div class="info-bar amber">⚠ ${d.duplicateRisk}</div>`:''}
+ ${d.notes?`<div class="info-bar green">✓ ${d.notes}</div>`:''}
+ <div class="two-col">
+  <div>
+   <div class="card">
+    <div class="card-title">Ownership</div>
+    <div class="row"><span class="row-label">Owner Team</span><span class="row-link" onclick="view='team';selected='${d.ownerTeam}';render()">${owner?.name||'⚠ Not set'}</span></div>
+    <div class="row"><span class="row-label">Steward Role</span><span>${d.stewardRole||'—'}</span></div>
+    <div class="row"><span class="row-label">System of Record</span><span>${sor?.name||'—'}</span></div>
+    ${d.archiveLocation?`<div class="row"><span class="row-label">Archive Location</span><span>${d.archiveLocation}</span></div>`:''}
+   </div>
+   <div class="card">
+    <div class="card-title">Teams that use this</div>
+    ${users.length?users.map(u=>`<div class="row"><span class="row-link" onclick="view='team';selected='${u.id}';render()">${u.name}</span></div>`).join(''):`<div style="color:var(--text-3);font-size:12px">No teams mapped yet</div>`}
+   </div>
+  </div>
+  <div>
+   <div class="card">
+    <div class="card-title">Lifecycle stages</div>
+    ${stages.length?stages.map(s=>`<div class="row">${s.name}</div>`).join(''):`<div style="color:var(--text-3);font-size:12px">Not mapped</div>`}
+   </div>
+  </div>
+ </div>`;
+}
+
+// ── TEAMS LIST ─────────────────────────────────────────────────────────────────
+function renderTeamList(){
+ const gmb=TEAMS.filter(t=>t.group==='GMB'&&(!Q||t.name.toLowerCase().includes(Q)));
+ const newIds=['digital-delivery','innovation'];
+ return `<div class="page-title">Teams</div>
+ <div class="page-sub">Select a team to see what they own and use.</div>
+ <div class="info-bar blue">Digital Delivery and Innovation were added via workshop session. Confirm they appear in the next update to GMB_Teams.png.</div>
+ <div class="grid">${gmb.map(t=>`<div class="tile${newIds.includes(t.id)?' tile-new':''}" onclick="selected='${t.id}';render()">
+  <div>${t.name}</div>
+  ${newIds.includes(t.id)?`<div class="tile-sub">⚠ New — not yet in source file</div>`:''}
+ </div>`).join('')}</div>`;
+}
+
+// ── TEAM DETAIL ────────────────────────────────────────────────────────────────
+function renderTeamDetail(){
+ const team=TEAMS.find(t=>t.id===selected);
+ if(!team) return '';
+ const owned=DATA_OBJECTS.filter(d=>d.ownerTeam===team.id&&(!Q||d.name.toLowerCase().includes(Q)));
+ const uses=DATA_OBJECTS.filter(d=>d.ownerTeam!==team.id&&d.usedByTeams&&d.usedByTeams.includes(team.id)&&(!Q||d.name.toLowerCase().includes(Q)));
+ return `<div class="back" onclick="selected=null;render()">← All Teams</div>
+ <div class="page-title">${team.name}</div>
+ <div style="font-size:12px;color:var(--text-2);margin:4px 0 8px">Source: ${team.source}</div>
+ <div style="font-size:12px;padding:8px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:18px;color:var(--text-2)">${team.notes||'No notes.'}</div>
+ <div class="card">
+  <div class="card-title" style="display:flex;justify-content:space-between;align-items:center">
+   <span>Data Objects Owned (${owned.length})</span>
+   <button class="btn btn-primary" style="padding:4px 12px;font-size:12px" onclick="openAddDataObjectForTeam('${team.id}')">+ Add Object</button>
+  </div>
+  ${owned.length?`<div class="grid">${owned.map(d=>{
+   const confColor=d.confidence==='Confirmed'?'badge-green':d.confidence==='Assumed'?'badge-amber':'badge-gray';
+   const sor=TOOLS.find(t=>t.id===d.systemOfRecord);
+   return `<div class="tile" onclick="view='data';selected='${d.id}';render()">
+    <div>${d.name}</div>
+    <div class="tile-sub" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px">
+     <span class="badge ${confColor}" style="font-size:10px">${d.confidence||'?'}</span>
+     ${sor?`<span class="badge badge-gray" style="font-size:10px">${sor.name}</span>`:''}
+    </div>
+   </div>`;}).join('')}</div>`:
+   `<div style="color:var(--text-3);font-size:13px">No data objects owned by this team yet. <span style="cursor:pointer;color:var(--blue);text-decoration:underline" onclick="openAddDataObjectForTeam('${team.id}')">Add one</span></div>`}
+ </div>
+ <div class="card">
+  <div class="card-title">Data Objects Used (${uses.length})</div>
+  ${uses.length?`<div class="grid">${uses.map(d=>{
+   const owner=TEAMS.find(t=>t.id===d.ownerTeam);
+   return `<div class="tile" onclick="view='data';selected='${d.id}';render()">
+    <div>${d.name}</div>
+    <div class="tile-sub" style="margin-top:4px">Owned by ${owner?.name||'?'}</div>
+   </div>`;}).join('')}</div>`:
+   `<div style="color:var(--text-3);font-size:13px">No data objects mapped as used by this team.</div>`}
+ </div>`;
+}
+
+// ── LIFECYCLE EXPLORER ────────────────────────────────────────────────────────
+function renderLifecycle(){
+ if(!lcStage) lcStage=LIFECYCLE_STAGES[0].id;
+ const stage=LIFECYCLE_STAGES.find(s=>s.id===lcStage);
+ const teams=(stage.responsibleTeams||[]).map(id=>TEAMS.find(t=>t.id===id)).filter(Boolean);
+ const tools=(stage.supportingTools||[]).map(id=>TOOLS.find(t=>t.id===id)).filter(Boolean);
+ const doInStage=DATA_OBJECTS.filter(d=>(d.lifecycleStages||[]).includes(lcStage));
+ const idx=LIFECYCLE_STAGES.findIndex(s=>s.id===lcStage);
+
+ const strip=LIFECYCLE_STAGES.map((s,i)=>`<div class="stage-chip${s.id===lcStage?' active':''}" onclick="lcStage='${s.id}';render()"><span class="stage-num">${i+1}</span>${s.name}</div>`).join('');
+
+ const handoffHtml=(stage.handoffs||[]).length
+  ? (stage.handoffs.map(h=>{
+     const fromT=TEAMS.find(t=>t.id===h.from);
+     const toT=TEAMS.find(t=>t.id===h.to);
+     return `<div class="handoff-arrow">
+      <span class="handoff-from">${fromT?.name||h.from}</span>
+      <div class="arrow-line"></div>
+      <span class="handoff-to">${toT?.name||h.to}</span>
+      <span style="font-size:11px;color:var(--text-2);margin-left:4px">${h.note}</span>
+     </div>`;}).join(''))
+  : `<div style="color:var(--text-3);font-size:13px">No handoffs confirmed for this stage.</div>`;
+
+ const outputHtml=(stage.outputs||[]).length
+  ? `<div style="display:flex;flex-wrap:wrap;margin:-3px">${stage.outputs.map(o=>`<span class="output-pill">${o}</span>`).join('')}</div>`
+  : `<div style="color:var(--text-3);font-size:13px">No outputs mapped.</div>`;
+
+ const prevBtn=idx>0?`<button class="btn" onclick="lcStage='${LIFECYCLE_STAGES[idx-1].id}';render()">← ${LIFECYCLE_STAGES[idx-1].name}</button>`:'';
+ const nextBtn=idx<LIFECYCLE_STAGES.length-1?`<button class="btn btn-primary" onclick="lcStage='${LIFECYCLE_STAGES[idx+1].id}';render()">${LIFECYCLE_STAGES[idx+1].name} →</button>`:'';
+
+ return `<div class="page-title">Lifecycle Explorer</div>
+ <div class="page-sub">Walk through each stage to see responsible teams, tools, outputs, and handoffs.</div>
+ <div class="stage-strip">${strip}</div>
+
+ <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap">
+  <div>
+   <div style="font-size:18px;font-weight:600;letter-spacing:-.01em">${stage.name}</div>
+   <div style="font-size:13px;color:var(--text-2);margin-top:4px;max-width:560px">${stage.description}</div>
+  </div>
+  <div style="display:flex;gap:8px">${prevBtn}${nextBtn}</div>
+ </div>
+
+ <div class="two-col">
+  <div>
+   <div class="card">
+    <div class="card-title">Responsible teams (${teams.length})</div>
+    ${teams.length?teams.map(t=>`<div class="row"><span class="row-link" onclick="view='team';selected='${t.id}';render()">${t.name}</span></div>`).join(''):`<div style="color:var(--text-3);font-size:13px">Not confirmed.</div>`}
+   </div>
+   <div class="card">
+    <div class="card-title">Supporting tools (${tools.length})</div>
+    ${tools.length?tools.map(t=>`<div class="row"><span>${t.name}</span></div>`).join(''):`<div style="color:var(--text-3);font-size:13px">Not mapped.</div>`}
+   </div>
+  </div>
+  <div>
+   <div class="card">
+    <div class="card-title">Outputs</div>
+    ${outputHtml}
+   </div>
+   <div class="card">
+    <div class="card-title">Handoffs</div>
+    ${handoffHtml}
+   </div>
+   <div class="card">
+    <div class="card-title">Data objects active in this stage (${doInStage.length})</div>
+    ${doInStage.length?`<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">${doInStage.map(d=>{
+     const owner=TEAMS.find(t=>t.id===d.ownerTeam);
+     return `<div class="tile" style="padding:8px 12px" onclick="view='data';selected='${d.id}';render()">
+      <div style="font-size:12px">${d.name}</div>
+      <div class="tile-sub">${owner?.name||'?'}</div>
+     </div>`;}).join('')}</div>`:`<div style="color:var(--text-3);font-size:13px">No data objects mapped.</div>`}
+   </div>
+  </div>
+ </div>`;
+}
+
+// ── RELATIONSHIP MAP ───────────────────────────────────────────────────────────
+function renderMap(){
+ return `<div class="page-title">Relationship Map</div>
+ <div class="page-sub">Visual overview of teams, tools, data objects, and lifecycle stages. Click a node to navigate to it.</div>
+ <div class="map-filter-row">
+  <div class="map-filter-btn${mapFilters.teams?' on':''}" onclick="mapFilters.teams=!mapFilters.teams;requestAnimationFrame(drawMap)">● Teams</div>
+  <div class="map-filter-btn${mapFilters.tools?' on':''}" onclick="mapFilters.tools=!mapFilters.tools;requestAnimationFrame(drawMap)">● Tools</div>
+  <div class="map-filter-btn${mapFilters.data?' on':''}" onclick="mapFilters.data=!mapFilters.data;requestAnimationFrame(drawMap)">● Data Objects</div>
+  <div class="map-filter-btn${mapFilters.lifecycle?' on':''}" onclick="mapFilters.lifecycle=!mapFilters.lifecycle;requestAnimationFrame(drawMap)">● Lifecycle</div>
+ </div>
+ <div id="mapWrap">
+  <canvas id="mapCanvas"></canvas>
+  <div class="map-tooltip" id="mapTip"></div>
+  <div class="map-legend">
+   <div class="map-leg-item"><div class="map-leg-dot" style="background:#77b800"></div>Teams</div>
+   <div class="map-leg-item"><div class="map-leg-dot" style="background:#053c3c"></div>Tools</div>
+   <div class="map-leg-item"><div class="map-leg-dot" style="background:#ff773f"></div>Data Objects</div>
+   <div class="map-leg-item"><div class="map-leg-dot" style="background:#b482ff"></div>Lifecycle Stages</div>
+   <div class="map-leg-item" style="margin-left:auto;font-size:10px;color:var(--text-3)">Hover to identify · Click to navigate</div>
+  </div>
+ </div>`;
+}
+
+let mapNodes=[];
+function drawMap(){
+ const canvas=document.getElementById('mapCanvas');
+ const wrap=document.getElementById('mapWrap');
+ if(!canvas||!wrap) return;
+ const W=wrap.clientWidth||800;
+ const H=Math.max(480, Math.round(W*0.58));
+ canvas.width=W; canvas.height=H; canvas.style.height=H+'px';
+ const ctx=canvas.getContext('2d');
+ ctx.clearRect(0,0,W,H);
+ mapNodes=[];
+
+ const cx=W/2, cy=H/2-20;
+
+ // GMB brand colors for node types
+ const C={team:'#77b800',tool:'#053c3c',data:'#ff773f',lifecycle:'#b482ff'};
+
+ // Layout radii
+ const r0=0, r1=Math.min(cx,cy)*0.32, r2=Math.min(cx,cy)*0.58, r3=Math.min(cx,cy)*0.82;
+
+ // Lifecycle — inner ring (purple)
+ if(mapFilters.lifecycle){
+  const stages=LIFECYCLE_STAGES;
+  stages.forEach((s,i)=>{
+   const a=(i/stages.length)*Math.PI*2 - Math.PI/2;
+   mapNodes.push({id:s.id,label:s.name,x:cx+Math.cos(a)*r1,y:cy+Math.sin(a)*r1,color:C.lifecycle,r:6,type:'lifecycle'});
+  });
+ }
+ // Teams — middle ring (GMB green)
+ if(mapFilters.teams){
+  const gmbTeams=TEAMS.filter(t=>t.group==='GMB');
+  gmbTeams.forEach((t,i)=>{
+   const a=(i/gmbTeams.length)*Math.PI*2 - Math.PI/2 + 0.2;
+   mapNodes.push({id:t.id,label:t.name,x:cx+Math.cos(a)*r2,y:cy+Math.sin(a)*r2,color:C.team,r:9,type:'team'});
+  });
+ }
+ // Tools — outer ring (dark green)
+ if(mapFilters.tools){
+  TOOLS.forEach((t,i)=>{
+   const a=(i/TOOLS.length)*Math.PI*2 - Math.PI/2 + 0.5;
+   mapNodes.push({id:t.id,label:t.name,x:cx+Math.cos(a)*r3,y:cy+Math.sin(a)*r3,color:C.tool,r:6,type:'tool'});
+  });
+ }
+ // Data objects — outer ring opposite (orange)
+ if(mapFilters.data){
+  const dos=DATA_OBJECTS.slice(0,18);
+  dos.forEach((d,i)=>{
+   const a=(i/dos.length)*Math.PI*2 + Math.PI/2 + 0.3;
+   mapNodes.push({id:d.id,label:d.name,x:cx+Math.cos(a)*r3,y:cy+Math.sin(a)*r3,color:C.data,r:5,type:'data'});
+  });
+ }
+
+ // Draw edges
+ if(mapFilters.tools&&mapFilters.teams){
+  TOOLS.forEach(tool=>{
+   const tn=mapNodes.find(n=>n.id===tool.id);
+   if(!tn) return;
+   (tool.usedBy||[]).forEach(tid=>{
+    const tm=mapNodes.find(n=>n.id===tid);
+    if(!tm) return;
+    ctx.beginPath();ctx.moveTo(tn.x,tn.y);ctx.lineTo(tm.x,tm.y);
+    ctx.strokeStyle='rgba(119,184,0,0.15)';ctx.lineWidth=1;ctx.stroke();
+   });
+  });
+ }
+ if(mapFilters.data&&mapFilters.teams){
+  DATA_OBJECTS.forEach(d=>{
+   const dn=mapNodes.find(n=>n.id===d.id);
+   const tn=mapNodes.find(n=>n.id===d.ownerTeam);
+   if(!dn||!tn) return;
+   ctx.beginPath();ctx.moveTo(dn.x,dn.y);ctx.lineTo(tn.x,tn.y);
+   ctx.strokeStyle='rgba(255,119,63,0.18)';ctx.lineWidth=1;ctx.stroke();
+  });
+ }
+ if(mapFilters.data&&mapFilters.tools){
+  DATA_OBJECTS.forEach(d=>{
+   const dn=mapNodes.find(n=>n.id===d.id);
+   const tn=mapNodes.find(n=>n.id===d.systemOfRecord);
+   if(!dn||!tn) return;
+   ctx.beginPath();ctx.moveTo(dn.x,dn.y);ctx.lineTo(tn.x,tn.y);
+   ctx.strokeStyle='rgba(5,60,60,0.12)';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+  });
+ }
+ if(mapFilters.lifecycle&&mapFilters.teams){
+  LIFECYCLE_STAGES.forEach(s=>{
+   const sn=mapNodes.find(n=>n.id===s.id);
+   if(!sn) return;
+   (s.responsibleTeams||[]).forEach(tid=>{
+    const tn=mapNodes.find(n=>n.id===tid);
+    if(!tn) return;
+    ctx.beginPath();ctx.moveTo(sn.x,sn.y);ctx.lineTo(tn.x,tn.y);
+    ctx.strokeStyle='rgba(180,130,255,0.18)';ctx.lineWidth=1;ctx.stroke();
+   });
+  });
+ }
+
+ // Draw nodes
+ mapNodes.forEach(n=>{
+  ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+  ctx.fillStyle=n.color+'CC';ctx.fill();
+  ctx.strokeStyle=n.color;ctx.lineWidth=1.5;ctx.stroke();
+  // Label
+  const shortLabel=n.label.length>18?n.label.slice(0,17)+'…':n.label;
+  ctx.font=`10px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif`;
+  ctx.textAlign='center';
+  ctx.fillStyle='#1a1917';
+  ctx.fillText(shortLabel,n.x,n.y-n.r-4);
+ });
+
+ // Mouse interactions
+ canvas.onmousemove=function(e){
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const tip=document.getElementById('mapTip');
+  const hit=mapNodes.find(n=>Math.hypot(n.x-mx,n.y-my)<n.r+4);
+  if(hit){
+   tip.textContent=hit.label;
+   tip.style.left=(e.clientX-rect.left+12)+'px';
+   tip.style.top=(e.clientY-rect.top-8)+'px';
+   tip.style.opacity=1;
+   canvas.style.cursor='pointer';
+  } else {
+   tip.style.opacity=0;
+   canvas.style.cursor='default';
+  }
+ };
+ canvas.onmouseleave=function(){document.getElementById('mapTip').style.opacity=0;};
+ canvas.onclick=function(e){
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+  const hit=mapNodes.find(n=>Math.hypot(n.x-mx,n.y-my)<n.r+4);
+  if(!hit) return;
+  if(hit.type==='team'){view='team';selected=hit.id;render();}
+  else if(hit.type==='data'){view='data';selected=hit.id;render();}
+  else if(hit.type==='lifecycle'){view='lifecycle';lcStage=hit.id;render();}
+ };
+}
+
+// ── OPEN QUESTIONS ─────────────────────────────────────────────────────────────
+const OQS=[
+ {id:"oq9",q:"What tools does Digital Delivery use to manage the archive handoff process?",team:"digital-delivery",priority:"Medium",status:"Open"},
+ {id:"oq10",q:"Does the Innovation team have involvement in any lifecycle stages beyond Firm Code reconciliation at Project Setup?",team:"innovation",priority:"Medium",status:"Open"},
+ {id:"oq11",q:"Should Digital Delivery and Innovation appear in GMB_Teams.png? Confirm with org chart owner.",team:"digital-delivery",priority:"High",status:"Open"},
+ {id:"oq1",q:"Which team is the 'Client Database Team' referenced in the diagram — Operations Team or a dedicated sub-team?",team:"operations-team",priority:"High",status:"Resolved",resolution:"Operations Team IS the Client Database Team."},
+ {id:"oq2",q:"What is the relationship between 'Integration' and 'Vision / Integration Team'?",team:"vision-integration-team",priority:"High",status:"Resolved",resolution:"Separate teams. Integration = operational. Vision / Integration = C-suite."},
+ {id:"oq3",q:"Who owns the CRM license — Operations Team or Super Teams?",team:"gmb-corp-brand-mktg",priority:"High",status:"Resolved",resolution:"GMB Corporate Branding & Marketing owns the CRM license."},
+ {id:"oq4",q:"Which team is responsible for the end-of-project data archive handoff from project teams?",team:"digital-delivery",priority:"High",status:"Resolved",resolution:"Digital Delivery team. New team added."},
+ {id:"oq5",q:"Does Learning Hubs have a role in the onboarding lifecycle stage?",team:"learning-hubs",priority:"Medium",status:"Resolved",resolution:"No. Learning Hubs has no onboarding role."},
+ {id:"oq6",q:"What is Vision / Integration Team's primary lifecycle stage involvement?",team:"vision-integration-team",priority:"Medium",status:"Resolved",resolution:"Approval of large firm-wide initiatives. New lifecycle stage added."},
+ {id:"oq7",q:"Which team stewards Firm Code / Firm ID reconciliation between CRM and Unanet?",team:"innovation",priority:"Medium",status:"Resolved",resolution:"Innovation team. New team added."},
+ {id:"oq8",q:"Does GMB Corporate Branding & Marketing own the project resume data object, or is that People's responsibility?",team:"gmb-corp-brand-mktg",priority:"Low",status:"Resolved",resolution:"GMB Corporate Branding & Marketing owns the project resume."},
+ {id:"oq11b",q:"Digital Delivery and Innovation confirmed to appear in GMB_Teams.png?",team:"digital-delivery",priority:"High",status:"Resolved",resolution:"Yes — both teams confirmed and should be added to the source file."}
+];
+function renderQuestions(){
+ const open=OQS.filter(q=>q.status==='Open');
+ const resolved=OQS.filter(q=>q.status==='Resolved');
+ return `<div class="page-title">Open Questions</div>
+ <div class="page-sub">Track ownership ambiguities. ${resolved.length} of ${OQS.length} resolved.</div>
+ <div class="stat-row">
+  <div class="stat"><div class="stat-n" style="color:var(--green)">${resolved.length}</div><div class="stat-l">Resolved</div></div>
+  <div class="stat"><div class="stat-n" style="color:var(--red)">${open.filter(q=>q.priority==='High').length}</div><div class="stat-l">High Open</div></div>
+  <div class="stat"><div class="stat-n" style="color:var(--amber)">${open.filter(q=>q.priority==='Medium').length}</div><div class="stat-l">Medium Open</div></div>
+  <div class="stat"><div class="stat-n">${open.length}</div><div class="stat-l">Total Open</div></div>
+ </div>
+ ${open.length?`<div class="section-label">Needs input</div>${open.map(q=>{
+  const team=TEAMS.find(t=>t.id===q.team);
+  return `<div class="oq ${q.priority==='High'?'high':'open'}">
+   <div class="oq-q">${q.q}</div>
+   <div class="oq-meta">${team?`<span>Team: ${team.name}</span>`:''}<span>Priority: ${q.priority}</span></div>
+  </div>`;}).join('')}`:''}
+ <div class="section-label" style="margin-top:16px">Resolved</div>
+ ${resolved.map(q=>`<div class="oq resolved">
+  <div class="oq-q" style="text-decoration:line-through;color:var(--text-2)">${q.q}</div>
+  <div style="font-size:12px;color:var(--green);margin-top:4px">✓ ${q.resolution}</div>
+ </div>`).join('')}`;
+}
+
+// ─── MODAL LOGIC ──────────────────────────────────────────────────────────────
+function openAddDataObject(){openDOModal(null,null);}
+function openAddDataObjectForTeam(teamId){openDOModal(null,teamId);}
+function openEditDO(id){openDOModal(id,null);}
+
+function openDOModal(editId, presetOwner){
+ // populate dropdowns
+ const sorSel=document.getElementById('doSoR');
+ sorSel.innerHTML=`<option value="">— Select —</option>`+TOOLS.map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+ const ownerSel=document.getElementById('doOwner');
+ ownerSel.innerHTML=`<option value="">— Select —</option>`+TEAMS.filter(t=>t.group==='GMB').map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+ // users checkboxes
+ document.getElementById('doUsersGrid').innerHTML=TEAMS.filter(t=>t.group==='GMB').map(t=>`<label class="check-item"><input type="checkbox" value="${t.id}" id="uc_${t.id}"> ${t.name}</label>`).join('');
+ // stages checkboxes
+ document.getElementById('doStagesGrid').innerHTML=LIFECYCLE_STAGES.map(s=>`<label class="check-item"><input type="checkbox" value="${s.id}" id="sc_${s.id}"> ${s.name}</label>`).join('');
+
+ if(editId){
+  const d=DATA_OBJECTS.find(x=>x.id===editId);
+  document.getElementById('doModalTitle').textContent='Edit Data Object';
+  document.getElementById('doId').value=d.id;
+  document.getElementById('doName').value=d.name;
+  document.getElementById('doDef').value=d.definition||'';
+  document.getElementById('doSoR').value=d.systemOfRecord||'';
+  document.getElementById('doOwner').value=d.ownerTeam||'';
+  document.getElementById('doSteward').value=d.stewardRole||'';
+  document.getElementById('doArchive').value=d.archiveLocation||'';
+  document.getElementById('doDupe').value=d.duplicateRisk||'';
+  document.getElementById('doNotes').value=d.notes||'';
+  setConf(d.confidence||'Unknown');
+  (d.usedByTeams||[]).forEach(id=>{const el=document.getElementById('uc_'+id);if(el)el.checked=true;});
+  (d.lifecycleStages||[]).forEach(id=>{const el=document.getElementById('sc_'+id);if(el)el.checked=true;});
+ } else {
+  document.getElementById('doModalTitle').textContent='Add Data Object';
+  document.getElementById('doId').value='';
+  document.getElementById('doName').value='';
+  document.getElementById('doDef').value='';
+  document.getElementById('doSoR').value='';
+  document.getElementById('doOwner').value=presetOwner||'';
+  document.getElementById('doSteward').value='';
+  document.getElementById('doArchive').value='';
+  document.getElementById('doDupe').value='';
+  document.getElementById('doNotes').value='';
+  setConf('Unknown');
+ }
+ document.getElementById('doModal').classList.add('open');
+}
+
+function setConf(val){
+ doConf=val;
+ document.querySelectorAll('.conf-pill').forEach(p=>{
+  p.className='conf-pill'+(p.dataset.v===val?' sel-'+val:'');
+ });
+}
+
+function saveDataObject(){
+ const name=document.getElementById('doName').value.trim();
+ if(!name){alert('Name is required.');return;}
+ const owner=document.getElementById('doOwner').value;
+ if(!owner){alert('Owner team is required.');return;}
+ const users=[...document.querySelectorAll('#doUsersGrid input:checked')].map(el=>el.value);
+ const stages=[...document.querySelectorAll('#doStagesGrid input:checked')].map(el=>el.value);
+ const existingId=document.getElementById('doId').value;
+ const obj={
+  id:existingId||'do-'+Date.now(),
+  name,
+  definition:document.getElementById('doDef').value.trim(),
+  systemOfRecord:document.getElementById('doSoR').value||null,
+  ownerTeam:owner,
+  usedByTeams:users,
+  stewardRole:document.getElementById('doSteward').value.trim(),
+  archiveLocation:document.getElementById('doArchive').value.trim(),
+  lifecycleStages:stages,
+  confidence:doConf,
+  duplicateRisk:document.getElementById('doDupe').value.trim(),
+  notes:document.getElementById('doNotes').value.trim()
+ };
+ if(existingId){
+  const idx=DATA_OBJECTS.findIndex(x=>x.id===existingId);
+  if(idx>-1) DATA_OBJECTS[idx]=obj;
+ } else {
+  DATA_OBJECTS.push(obj);
+ }
+ save();
+ closeModal('doModal');
+ if(view==='data') selected=obj.id;
+ render();
+}
+
+function deleteDO(id){
+ if(!confirm('Delete this data object? This cannot be undone.')) return;
+ DATA_OBJECTS=DATA_OBJECTS.filter(x=>x.id!==id);
+ save();
+ selected=null;
+ render();
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.getElementById('doModal').addEventListener('click',function(e){if(e.target===this)closeModal('doModal');});
+
+// ─── EXPORT ───────────────────────────────────────────────────────────────────
+function exportData(){
+ const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),teams:TEAMS,tools:TOOLS,lifecycleStages:LIFECYCLE_STAGES,dataObjects:DATA_OBJECTS},null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='gmb-responsibility-data.json';a.click();
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderNav();render();
+</script>
+</body>
+</html>
